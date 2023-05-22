@@ -5,12 +5,16 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/sik0-o/0xyWD/template"
 )
 
+// SetProxy build a proxy extension for browser and than inject it in browser capabilities.
+// It also creates temporary folder `tmp`.
+// in this version of method empty proxy do not fires an error.
 func SetProxy(caps CapsExtAdder, proxy string) error {
 	if proxy == "" {
 		// TODO: or ERROR?
@@ -19,6 +23,9 @@ func SetProxy(caps CapsExtAdder, proxy string) error {
 
 	// createExtension
 	tempLocation := fmt.Sprintf("tmp/%s/", Md5Str(proxy))
+	if err := os.MkdirAll(tempLocation, 0777); err != nil {
+		return err
+	}
 
 	if err := createExtension(tempLocation, proxy, true); err != nil {
 		return err
