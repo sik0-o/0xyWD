@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"github.com/sik0-o/0xyWD/template"
 )
 
 func SetProxy(caps CapsExtAdder, proxy string) error {
@@ -18,23 +20,48 @@ func SetProxy(caps CapsExtAdder, proxy string) error {
 	// createExtension
 	tempLocation := fmt.Sprintf("tmp/%s/", Md5Str(proxy))
 
-	if err := createExtension(tempLocation, proxy); err != nil {
+	if err := createExtension(tempLocation, proxy, true); err != nil {
 		return err
 	}
 
 	return caps.AddUnpackedExtension(tempLocation)
 }
 
-func createExtension(temporaryExtensionLocation string, proxy string) error {
+func createExtension(temporaryExtensionLocation string, proxy string, buildintemplates bool) error {
 	p, err := url.Parse(proxy)
 	if err != nil {
 		return err
 	}
 
-	if err := createFromTemplates(`template`, temporaryExtensionLocation, map[string]string{
-		"${PRX_PROXY}": p.String(),
-	}); err != nil {
-		return err
+	if buildintemplates {
+		return createFromBuiltinTemplates(temporaryExtensionLocation, map[string]string{
+			"${PRX_PROXY}": p.String(),
+		})
+	} else {
+		if err := createFromTemplates(`template`, temporaryExtensionLocation, map[string]string{
+			"${PRX_PROXY}": p.String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createFromBuiltinTemplates(extensionLocation string, replaceData map[string]string) error {
+
+	for filename, str := range map[string]string{
+		"manifest.js":   template.ManifestJS,
+		"background.js": template.BackgroundJS,
+	} {
+		for k, v := range replaceData {
+			str = strings.ReplaceAll(str, k, v)
+		}
+
+		b := []byte(str)
+		if err := ioutil.WriteFile(extensionLocation+"/"+filename, b, 0777); err != nil {
+			return err
+		}
 	}
 
 	return nil
