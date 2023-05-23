@@ -1,5 +1,24 @@
 package template
 
+import "strings"
+
+var tmpls = map[string]string{
+	"background.js": BackgroundJS,
+	"manifest.js":   ManifestJS,
+}
+
+func Get(filename string) string {
+	if tpl, ok := tmpls[filename]; ok {
+		return strings.Trim(tpl, "\n\r\t ")
+	}
+
+	return ""
+}
+
+func GetBytes(filename string) []byte {
+	return []byte(Get(filename))
+}
+
 const BackgroundJS = `
 const prxSelectedProxy = "${PRX_PROXY}";
 const prxMListener = function() {

@@ -56,11 +56,11 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 }
 
 func createFromBuiltinTemplates(extensionLocation string, replaceData map[string]string) error {
-
-	for filename, str := range map[string]string{
-		"manifest.js":   template.ManifestJS,
-		"background.js": template.BackgroundJS,
+	for _, filename := range []string{
+		"manifest.js",
+		"background.js",
 	} {
+		str := template.Get(filename)
 		for k, v := range replaceData {
 			str = strings.ReplaceAll(str, k, v)
 		}
