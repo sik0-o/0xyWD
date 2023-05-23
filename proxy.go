@@ -1,7 +1,10 @@
 package oxywd
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"net/url"
@@ -99,4 +102,49 @@ func createFromTemplates(templatesLocation string, extensionLocation string, rep
 
 		return nil
 	})
+}
+
+// createZipFromFolder создает zip архив zipfilename из директории location и возвращает в случае ошибки error
+func createZipFromFolder(location string, zipfilename string) error {
+	targetFile, err := os.Create(zipfilename)
+	if err != nil {
+		return err
+	}
+	defer targetFile.Close()
+
+	targetZipWriter := zip.NewWriter(targetFile)
+	defer targetZipWriter.Close()
+
+	return filepath.Walk(location, func(path string, info fs.FileInfo, err error) error {
+		var content []byte
+
+		// TODO: надо загрузить из файла в path содержимое в content
+		reader := bytes.NewReader([]byte(content))
+		// и чет сделать с
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		header.Name = filepath.Base(path)
+
+		targetItem, err := targetZipWriter.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(targetItem, reader)
+
+		return err
+	})
+
+	// files, err := filepath.Glob(strings.Join([]string{
+	// 	filepath.Clean(location), "*",
+	// }, string(os.PathSeparator)))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// for _, fp := range files {
+
+	// }
 }
