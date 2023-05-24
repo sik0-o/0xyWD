@@ -64,7 +64,7 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 
 func createFromBuiltinTemplates(extensionLocation string, replaceData map[string]string) error {
 	for _, filename := range []string{
-		"manifest.js",
+		"manifest.json",
 		"background.js",
 	} {
 		str := template.Get(filename)
