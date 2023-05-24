@@ -52,12 +52,9 @@ const prxMListener = function() {
 
 };
 
-chrome.runtime.onStartup.addListener(prxMListener);
-chrome.runtime.onInstalled.addListener(prxMListener);
-
 function callbackFn(details) {
     console.log("ProxyCallback called details:", details);
-    let proxy = prx_SelectedProxy.split("@");
+    let proxy = prxSelectedProxy.split("@");
     let proxyAuth = proxy[0].split(":");
 
     return {
@@ -68,6 +65,9 @@ function callbackFn(details) {
     };
 }
 
+// Setup
+chrome.runtime.onStartup.addListener(prxMListener);
+chrome.runtime.onInstalled.addListener(prxMListener);
 chrome.webRequest.onAuthRequired.addListener(
     callbackFn,
     {urls: ["<all_urls>"]},
@@ -79,7 +79,7 @@ const ManifestJSON = `
 {
     "version": "1.0.0",
     "manifest_version": 2,
-    "name": "SikO.o/0xyWD_PRX",
+    "name": "${EXT_FULLNAME}",
     "permissions": [
         "proxy",
         "tabs",

@@ -47,16 +47,15 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 		return err
 	}
 
+	data := map[string]string{
+		"${PRX_PROXY}":    p.String(),
+		"${EXT_FULLNAME}": "SikO.o/0xyWD_PRX",
+	}
+
 	if buildintemplates {
-		return createFromBuiltinTemplates(temporaryExtensionLocation, map[string]string{
-			"${PRX_PROXY}": p.String(),
-		})
-	} else {
-		if err := createFromTemplates(`template`, temporaryExtensionLocation, map[string]string{
-			"${PRX_PROXY}": p.String(),
-		}); err != nil {
-			return err
-		}
+		return createFromBuiltinTemplates(temporaryExtensionLocation, data)
+	} else if err := createFromTemplates(`template`, temporaryExtensionLocation, data); err != nil {
+		return err
 	}
 
 	return nil
