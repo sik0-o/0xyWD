@@ -4,7 +4,7 @@ import "strings"
 
 var tmpls = map[string]string{
 	"background.js": BackgroundJS,
-	"manifest.js":   ManifestJS,
+	"manifest.json": ManifestJSON,
 }
 
 func Get(filename string) string {
@@ -75,7 +75,7 @@ chrome.webRequest.onAuthRequired.addListener(
 );
 `
 
-const ManifestJS = `
+const ManifestJSON = `
 {
     "version": "1.0.0",
     "manifest_version": 2,
