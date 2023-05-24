@@ -114,8 +114,8 @@ func createZipFromFolder(location string, zipfilename string) error {
 	targetZipWriter := zip.NewWriter(targetFile)
 	defer targetZipWriter.Close()
 
-	return filepath.Walk(location, func(path string, d fs.FileInfo, err error) error {
-		if d.IsDir() {
+	return filepath.Walk(location, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
 			return nil
 		}
 
@@ -124,11 +124,6 @@ func createZipFromFolder(location string, zipfilename string) error {
 			return err
 		}
 		defer file.Close()
-
-		info, err := file.Stat()
-		if err != nil {
-			return err
-		}
 
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
