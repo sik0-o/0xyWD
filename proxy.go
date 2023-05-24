@@ -33,7 +33,12 @@ func SetProxy(caps CapsExtAdder, proxy string) error {
 		return err
 	}
 
-	return caps.AddUnpackedExtension(tempLocation)
+	zipfilename := fmt.Sprintf("tmp/%s.zip", Md5Str(proxy))
+	if err := createZipFromFolder(tempLocation, zipfilename); err != nil {
+		return err
+	}
+
+	return caps.AddExtension(zipfilename)
 }
 
 func createExtension(temporaryExtensionLocation string, proxy string, buildintemplates bool) error {
