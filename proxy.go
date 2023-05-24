@@ -47,8 +47,15 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 		return err
 	}
 
+	proxyURL := p.String()
+	if strings.Contains(proxyURL, "://") {
+		if s := strings.Split(proxyURL, "://"); len(s) > 1 {
+			proxyURL = s[1]
+		}
+	}
+
 	data := map[string]string{
-		"${PRX_PROXY}":    p.String(),
+		"${PRX_PROXY}":    proxyURL,
 		"${EXT_FULLNAME}": "SikO.o/0xyWD_PRX",
 	}
 
