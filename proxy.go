@@ -2,7 +2,6 @@ package oxywd
 
 import (
 	"archive/zip"
-	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -115,12 +114,21 @@ func createZipFromFolder(location string, zipfilename string) error {
 	targetZipWriter := zip.NewWriter(targetFile)
 	defer targetZipWriter.Close()
 
-	return filepath.Walk(location, func(path string, info fs.FileInfo, err error) error {
-		var content []byte
+	return filepath.Walk(location, func(path string, d fs.FileInfo, err error) error {
+		if d.IsDir() {
+			return nil
+		}
 
-		// TODO: надо загрузить из файла в path содержимое в content
-		reader := bytes.NewReader([]byte(content))
-		// и чет сделать с
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		info, err := file.Stat()
+		if err != nil {
+			return err
+		}
 
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
@@ -132,19 +140,12 @@ func createZipFromFolder(location string, zipfilename string) error {
 		if err != nil {
 			return err
 		}
-		_, err = io.Copy(targetItem, reader)
 
-		return err
+		_, err = io.Copy(targetItem, file)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
-
-	// files, err := filepath.Glob(strings.Join([]string{
-	// 	filepath.Clean(location), "*",
-	// }, string(os.PathSeparator)))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for _, fp := range files {
-
-	// }
 }
