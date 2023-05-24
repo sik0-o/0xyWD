@@ -1,14 +1,16 @@
-package oxywd
+package oxywd_test
 
 import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	oxywd "github.com/sik0-o/0xyWD"
 )
 
 var cleanupTemporaryDir = false
 
-func TestCreateZipFromFolder(t *testing.T) {
+func Test_CreateZipFromFolder(t *testing.T) {
 	t.Log("Start createZipFromFolder Test")
 	testFolder, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -41,7 +43,7 @@ func TestCreateZipFromFolder(t *testing.T) {
 	t.Logf("testZipLocation %s was calculated", testFolder)
 
 	t.Log("Start creating zip from folder", testFolder, testZipLocation)
-	if err := createZipFromFolder(testFolder, testZipLocation); err != nil {
+	if err := oxywd.СreateZipFromFolder(testFolder, testZipLocation); err != nil {
 		t.Fatal(err)
 	}
 

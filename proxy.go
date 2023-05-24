@@ -1,9 +1,7 @@
 package oxywd
 
 import (
-	"archive/zip"
 	"fmt"
-	"io"
 	"io/fs"
 	"io/ioutil"
 	"net/url"
@@ -34,7 +32,7 @@ func SetProxy(caps CapsExtAdder, proxy string) error {
 	}
 
 	zipfilename := fmt.Sprintf("tmp/%s.zip", Md5Str(proxy))
-	if err := createZipFromFolder(tempLocation, zipfilename); err != nil {
+	if err := СreateZipFromFolder(tempLocation, zipfilename); err != nil {
 		return err
 	}
 
@@ -108,48 +106,6 @@ func createFromTemplates(templatesLocation string, extensionLocation string, rep
 			if err := ioutil.WriteFile(extensionLocation+"/"+info.Name(), b, 0777); err != nil {
 				return err
 			}
-		}
-
-		return nil
-	})
-}
-
-// createZipFromFolder создает zip архив zipfilename из директории location и возвращает в случае ошибки error
-func createZipFromFolder(location string, zipfilename string) error {
-	targetFile, err := os.Create(zipfilename)
-	if err != nil {
-		return err
-	}
-	defer targetFile.Close()
-
-	targetZipWriter := zip.NewWriter(targetFile)
-	defer targetZipWriter.Close()
-
-	return filepath.Walk(location, func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		header, err := zip.FileInfoHeader(info)
-		if err != nil {
-			return err
-		}
-		header.Name = filepath.Base(path)
-
-		targetItem, err := targetZipWriter.CreateHeader(header)
-		if err != nil {
-			return err
-		}
-
-		_, err = io.Copy(targetItem, file)
-		if err != nil {
-			return err
 		}
 
 		return nil
