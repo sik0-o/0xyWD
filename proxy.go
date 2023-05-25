@@ -1,6 +1,7 @@
 package oxywd
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -12,23 +13,52 @@ import (
 	"github.com/sik0-o/0xyWD/template"
 )
 
-// SetProxy build a proxy extension for browser and than inject it in browser capabilities.
-// It also creates temporary folder `tmp`.
-// in this version of method empty proxy do not fires an error.
-func SetProxy(caps CapsExtAdder, proxy string) error {
+// setupProxyExtension creates temporary folder in `tmp/` folder than build templates
+// and add it to temporary folder.
+func setupProxyExtension(proxy string) (string, error) {
 	if proxy == "" {
 		// TODO: or ERROR?
-		return nil
+		return "", nil
 	}
 
 	// createExtension
 	tempLocation := fmt.Sprintf("tmp/%s/", Md5Str(proxy))
 	if err := os.MkdirAll(tempLocation, 0777); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := createExtension(tempLocation, proxy, true); err != nil {
+		return "", err
+	}
+
+	return tempLocation, nil
+}
+
+// SetProxy build a proxy unpacked extension for browser
+// and than inject it in browser capabilities.
+// It also creates temporary folder `tmp`.
+// in this version of method empty proxy do not fires an error.
+func SetProxy(caps CapsExtAdder, proxy string) error {
+	tempLocation, err := setupProxyExtension(proxy)
+	if err != nil {
 		return err
+	}
+
+	return caps.AddUnpackedExtension(tempLocation)
+}
+
+// SetProxyZip build a proxy ZIP extension for browser
+// and than inject it in browser capabilities.
+// It also creates temporary folder `tmp`.
+// in this version of method empty proxy do not fires an error.
+func SetProxyZip(caps CapsExtAdder, proxy string) error {
+	tempLocation, err := setupProxyExtension(proxy)
+	if err != nil {
+		return err
+	}
+
+	if tempLocation == "" {
+		return errors.New("empty tempLocation path")
 	}
 
 	zipfilename := fmt.Sprintf("tmp/%s.zip", Md5Str(proxy))
@@ -39,6 +69,9 @@ func SetProxy(caps CapsExtAdder, proxy string) error {
 	return caps.AddExtension(zipfilename)
 }
 
+// createExtension in temporaryExtensionLocation with provided
+// proxy url string (scheme:// required) from builtintemplates if set or from templates
+// that are located in `template` folder.
 func createExtension(temporaryExtensionLocation string, proxy string, buildintemplates bool) error {
 	p, err := url.Parse(proxy)
 	if err != nil {
