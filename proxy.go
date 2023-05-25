@@ -85,7 +85,7 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 		}
 	}
 
-	data := map[string]string{
+	data := map[string]any{
 		"${PRX_PROXY}":    proxyURL,
 		"${EXT_FULLNAME}": "SikO.o/0xyWD_PRX",
 	}
@@ -99,18 +99,13 @@ func createExtension(temporaryExtensionLocation string, proxy string, buildintem
 	return nil
 }
 
-func createFromBuiltinTemplates(extensionLocation string, replaceData map[string]string) error {
+func createFromBuiltinTemplates(extensionLocation string, replaceData map[string]any) error {
 	for _, filename := range []string{
 		"manifest.json",
 		"background.js",
 	} {
-		str := template.Get(filename)
-		for k, v := range replaceData {
-			str = strings.ReplaceAll(str, k, v)
-		}
-
-		b := []byte(str)
-		if err := ioutil.WriteFile(extensionLocation+"/"+filename, b, 0777); err != nil {
+		ext := template.Get(filename)
+		if err := ioutil.WriteFile(extensionLocation+"/"+filename, []byte(ext.BuildTemplate(replaceData)), 0777); err != nil {
 			return err
 		}
 	}
@@ -118,7 +113,7 @@ func createFromBuiltinTemplates(extensionLocation string, replaceData map[string
 	return nil
 }
 
-func createFromTemplates(templatesLocation string, extensionLocation string, replaceData map[string]string) error {
+func createFromTemplates(templatesLocation string, extensionLocation string, replaceData map[string]any) error {
 	return filepath.Walk(templatesLocation, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			// create directory in temporary location
@@ -132,7 +127,7 @@ func createFromTemplates(templatesLocation string, extensionLocation string, rep
 			str := string(b)
 
 			for k, v := range replaceData {
-				str = strings.ReplaceAll(str, k, v)
+				str = strings.ReplaceAll(str, k, fmt.Sprintf("%s", v))
 			}
 
 			b = []byte(str)
