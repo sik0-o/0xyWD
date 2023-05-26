@@ -1,96 +1,77 @@
 package template
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-var tmpls = map[string]string{
-	"background.js": BackgroundJS,
-	"manifest.json": ManifestJSON,
-}
+var tmpls = (ExtensionList{
+	NewManifestJSON(),
+	NewBackgroundJS(),
+})
 
-func Get(filename string) string {
-	if tpl, ok := tmpls[filename]; ok {
-		return strings.Trim(tpl, "\n\r\t ")
+type ExtensionList []Extension
+
+func (el *ExtensionList) ToMap() ExtensionMap {
+	em := map[string]Extension{}
+	for _, e := range *el {
+		em[e.Filename()] = e
 	}
 
-	return ""
+	return em
+}
+
+type ExtensionMap map[string]Extension
+
+func (em *ExtensionMap) ToList() ExtensionList {
+	el := []Extension{}
+	for _, e := range *em {
+		el = append(el, e)
+	}
+
+	return el
+}
+
+func Get(filename string) Extension {
+	if tpl, ok := tmpls.ToMap()[filename]; ok {
+		return tpl
+	}
+
+	return Extension{}
+}
+
+func GetTmpl(filename string) string {
+	ext := Get(filename)
+	return strings.Trim(ext.template, "\n\r\t ")
 }
 
 func GetBytes(filename string) []byte {
-	return []byte(Get(filename))
+	return []byte(GetTmpl(filename))
 }
 
-const BackgroundJS = `
-const prxSelectedProxy = "${PRX_PROXY}";
-const prxMListener = function() {
-    console.log("Proxy extension start. Selected proxy: ", prxSelectedProxy);
-    let proxy = prxSelectedProxy.split("@");
-    let proxyAddr = "";
-    if(proxy.length > 1) {
-        proxyAddr = proxy[1].split(":");
-    } else {
-        proxyAddr = proxy[0].split(":");
-    }
-    
-    var config = {
-        mode: "fixed_servers",
-        rules: {
-            singleProxy: {
-                scheme: "http",
-                host: proxyAddr[0],
-                port: parseInt(proxyAddr[1])
-            },
-            bypassList: ["foobar.com"]
-        }
-    };
-
-    chrome.proxy.settings.set(
-        {value: config, scope: "regular"}, 
-        function() {}
-    );
-
-    console.log("Proxy extension initialized with conf", config);
-
-};
-
-function callbackFn(details) {
-    console.log("ProxyCallback called details:", details);
-    let proxy = prxSelectedProxy.split("@");
-    let proxyAuth = proxy[0].split(":");
-
-    return {
-        authCredentials: {
-            username: proxyAuth[0],
-            password: proxyAuth[1]
-        }
-    };
+type Extension struct {
+	filename string
+	template string
+	dataVals map[string]any
 }
 
-// Setup
-chrome.runtime.onStartup.addListener(prxMListener);
-chrome.runtime.onInstalled.addListener(prxMListener);
-chrome.webRequest.onAuthRequired.addListener(
-    callbackFn,
-    {urls: ["<all_urls>"]},
-    ['blocking']
-);
-`
+func (e *Extension) BuildTemplate(values map[string]any) string {
+	if e.dataVals == nil {
+		e.dataVals = map[string]any{}
+	}
+	vals := e.dataVals
+	for k, v := range values {
+		vals[k] = v
+	}
 
-const ManifestJSON = `
-{
-    "version": "1.0.0",
-    "manifest_version": 2,
-    "name": "${EXT_FULLNAME}",
-    "permissions": [
-        "proxy",
-        "tabs",
-        "unlimitedStorage",
-        "storage",
-        "<all_urls>",
-        "webRequest",
-        "webRequestBlocking"
-    ],
-    "background": {
-        "scripts": ["background.js"]
-    }
+	str := e.template
+	for k, v := range vals {
+		str = strings.ReplaceAll(str, k, fmt.Sprintf("%s", v))
+	}
+
+	return str
 }
-`
+
+func (e *Extension) Filename() string {
+	return e.filename
+}
